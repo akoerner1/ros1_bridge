@@ -20,6 +20,14 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <cctype>
+
+
 // include ROS 1
 #ifdef __clang__
 # pragma clang diagnostic push
@@ -121,6 +129,37 @@ bool parse_command_options(
   bridge_all_2to1_topics = bridge_all_topics || get_flag_option(args, "--bridge-all-2to1-topics");
 
   return true;
+}
+
+
+std::string ltrim(const std::string &s) {
+    size_t start = s.find_first_not_of(" \t\n\r\f\v");
+    return (start == std::string::npos) ? "" : s.substr(start);
+}
+
+std::vector<std::string> get_topic_whitelist() {
+    std::vector<std::string> whitelist;
+    std::ifstream file("whitelist.txt");
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file 'whitelist.txt'" << std::endl;
+        return whitelist;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::string trimmed_line = ltrim(line);
+        if (!trimmed_line.empty() && trimmed_line[0] != '#') {
+            whitelist.push_back(line);
+        }
+    }
+
+    file.close();
+    return whitelist;
+}
+
+bool string_in_vector(const std::vector<std::string>& vec, const std::string& str) {
+    return std::find(vec.begin(), vec.end(), str) != vec.end();
 }
 
 void update_bridge(
@@ -275,14 +314,20 @@ void update_bridge(
       topic_name.c_str(), bridge.ros2_type_name.c_str(), bridge.ros1_type_name.c_str());
   }
 
+ 
+  std::vector<std::string> topic_whitelist = get_topic_whitelist();
+
   // remove obsolete bridges
   std::vector<std::string> to_be_removed_1to2;
   for (auto it : bridges_1to2) {
     std::string topic_name = it.first;
     if (
       ros1_publishers.find(topic_name) == ros1_publishers.end() ||
-      (!bridge_all_1to2_topics && ros2_subscribers.find(topic_name) == ros2_subscribers.end()))
-    {
+      (!bridge_all_1to2_topics && ros2_subscribers.find(topic_name) == ros2_subscribers.end())){
+      to_be_removed_1to2.push_back(topic_name);
+    }
+
+    if(!string_in_vector(topic_whitelist, topic_name)){
       to_be_removed_1to2.push_back(topic_name);
     }
   }
@@ -298,6 +343,10 @@ void update_bridge(
       (!bridge_all_2to1_topics && ros1_subscribers.find(topic_name) == ros1_subscribers.end()) ||
       ros2_publishers.find(topic_name) == ros2_publishers.end())
     {
+      to_be_removed_2to1.push_back(topic_name);
+    }
+
+    if(!string_in_vector(topic_whitelist, topic_name)){
       to_be_removed_2to1.push_back(topic_name);
     }
   }

@@ -163,7 +163,11 @@ set(target_dependencies
   "resource/interface_factories.cpp.em"
   "resource/pkg_factories.cpp.em"
   "resource/pkg_factories.hpp.em"
+  "resource/whitelist.txt"
   "ros1_bridge/__init__.py")
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resource/whitelist.txt
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
@@ -331,3 +335,4 @@ install(
   DIRECTORY resource
   DESTINATION share/${PROJECT_NAME}
 )
+

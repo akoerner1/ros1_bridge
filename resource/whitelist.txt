@@ -1,0 +1,4 @@
+# All topics in this list will be bridged
+
+/ros_bridge_heartbeat
+ros_bridge_heartbeat
