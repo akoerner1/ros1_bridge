@@ -27,6 +27,9 @@
 #include <algorithm>
 #include <cctype>
 
+#include <iostream>
+#include <unistd.h>
+#include <limits.h>
 
 // include ROS 1
 #ifdef __clang__
@@ -140,6 +143,13 @@ std::string ltrim(const std::string &s) {
 std::vector<std::string> get_topic_whitelist() {
     std::vector<std::string> whitelist;
     std::ifstream file("whitelist.txt");
+
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        std::cout << "Current working directory: " << cwd << std::endl;
+    } else {
+        perror("getcwd() error");
+    }
 
     if (!file.is_open()) {
         std::cerr << "Error opening file 'whitelist.txt'" << std::endl;
