@@ -236,10 +236,16 @@ void update_bridge(
       ros2_publisher_qos.transient_local();
     }
     try {
-      bridge.bridge_handles = ros1_bridge::create_bridge_from_1_to_2(
+
+      std::vector<std::string> topic_whitelist = get_topic_whitelist();
+      if(string_in_vector(topic_whitelist, topic_name)){
+        bridge.bridge_handles = ros1_bridge::create_bridge_from_1_to_2(
         ros1_node, ros2_node,
         bridge.ros1_type_name, topic_name, 10,
         bridge.ros2_type_name, topic_name, ros2_publisher_qos);
+      }else{
+        continue;
+      }
     } catch (std::runtime_error & e) {
       fprintf(
         stderr,
